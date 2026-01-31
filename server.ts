@@ -1,12 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
-import { locationTemplate, type Location } from "./templates";
+import { type Location, locationTemplate } from "./templates.ts";
+import process from "node:process";
 
 // Load environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables");
+  console.error(
+    "Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables",
+  );
   process.exit(1);
 }
 
@@ -51,7 +54,7 @@ function getContentType(path: string): string {
 const server = Bun.serve({
   port: process.env.PORT || 3000,
 
-  async fetch(req) {
+  async fetch(req: { url: string | URL }) {
     const url = new URL(req.url);
     const pathname = url.pathname;
 
