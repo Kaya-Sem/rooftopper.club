@@ -46,15 +46,35 @@ if (navigator.geolocation) {
     );
 }
 
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
+// Profile button elements
+const profileIcon = document.getElementById("profileIcon");
 
+// Update profile button based on auth state
+function updateProfileButton(user) {
     if (user) {
-        console.log("User is logged in:", user.email);
+        profileIcon.textContent = "✓";
+        profileIcon.className = "logged-in";
     } else {
-        console.log("User is not logged in");
+        profileIcon.textContent = "✕";
+        profileIcon.className = "logged-out";
     }
 }
+
+// Check current user and update UI
+async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    updateProfileButton(user);
+
+    if (user) {
+        console.debug("User is logged in:", user.email);
+    } else {
+        console.debug("User is not logged in");
+    }
+}
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+    updateProfileButton(session?.user || null);
+});
 
 async function fetchLocations() {
     const { data, error } = await supabaseClient
@@ -84,3 +104,20 @@ async function loadMarkers() {
 // Uncomment to load markers when ready:
 loadMarkers();
 checkUser();
+
+async function signup() {
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: "example@email.com",
+        password: "example-password",
+    });
+}
+
+async function login() {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: "example@email.com",
+        password: "example-password",
+    });
+}
+
+signup();
+login();
