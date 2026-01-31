@@ -6,6 +6,10 @@ import {
   userSettingsTemplate,
 } from "./templates.ts";
 import process from "node:process";
+import path from "node:path";
+
+// Get project root directory (one level up from src/)
+const PROJECT_ROOT = path.resolve(import.meta.dir, "..");
 
 // Load environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -105,7 +109,7 @@ const server = Bun.serve({
 
     // Serve assets from /assets/
     if (pathname.startsWith("/assets/")) {
-      const file = Bun.file(".." + pathname);
+      const file = Bun.file(path.join(PROJECT_ROOT, pathname));
       if (await file.exists()) {
         return new Response(file, {
           headers: { "Content-Type": getContentType(pathname) },
@@ -116,7 +120,7 @@ const server = Bun.serve({
 
     // Serve public files (html, css, js)
     const filePath = pathname === "/" ? "/index.html" : pathname;
-    const file = Bun.file("../public" + filePath);
+    const file = Bun.file(path.join(PROJECT_ROOT, "public", filePath));
 
     if (await file.exists()) {
       return new Response(file, {
