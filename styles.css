@@ -138,3 +138,65 @@ body {
 .leaflet-popup-close-button:hover {
     color: #e5e5e5 !important;
 }
+
+/* Location popup link */
+.location-popup a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.location-popup a:hover {
+    text-decoration: underline;
+}
+
+/* Page content (for location pages) */
+.page-content {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.location-card {
+    background: rgba(38, 38, 38, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.location-card h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.location-details {
+    margin-bottom: 24px;
+}
+
+.location-details p {
+    margin-bottom: 8px;
+    color: #9ca3af;
+}
+
+.location-details strong {
+    color: #e5e5e5;
+}
+
+.back-link {
+    display: inline-block;
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: #93c5fd;
+}

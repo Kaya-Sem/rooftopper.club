@@ -90,14 +90,37 @@ async function fetchLocations() {
     return data;
 }
 
-// Example: Add markers from database
+// Parse coordinate string "(lat,lng)" to [lat, lng] array
+function parseCoordinate(coordStr) {
+    const match = coordStr.match(/\(([^,]+),([^)]+)\)/);
+    if (match) {
+        return [parseFloat(match[1]), parseFloat(match[2])];
+    }
+    return null;
+}
+
+// Add markers from database
 async function loadMarkers() {
     const locations = await fetchLocations();
 
     locations.forEach((location) => {
-        L.marker([location.lat, location.lng])
+        const coords = parseCoordinate(location.coordinate);
+        if (!coords) {
+            console.warn("Invalid coordinate for location:", location.id);
+            return;
+        }
+
+        const popupContent = `
+            <div class="location-popup">
+                <strong>${location.name || "Unknown location"}</strong>
+                <br>
+                <a href="/location/${location.id}">View details →</a>
+            </div>
+        `;
+
+        L.marker(coords)
             .addTo(map)
-            .bindPopup(location.name || "Unknown location");
+            .bindPopup(popupContent);
     });
 }
 
@@ -105,19 +128,24 @@ async function loadMarkers() {
 loadMarkers();
 checkUser();
 
-async function signup() {
+// Auth functions (to be called from UI)
+async function signup(email, password) {
     const { data, error } = await supabaseClient.auth.signUp({
-        email: "example@email.com",
-        password: "example-password",
+        email,
+        password,
     });
+    return { data, error };
 }
 
-async function login() {
+async function login(email, password) {
     const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: "example@email.com",
-        password: "example-password",
+        email,
+        password,
     });
+    return { data, error };
 }
 
-signup();
-login();
+async function logout() {
+    const { error } = await supabaseClient.auth.signOut();
+    return { error };
+}
