@@ -1,0 +1,316 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #1a1a1a;
+    --text: #e5e5e5;
+    --text-muted: #9ca3af;
+    --border: rgba(255, 255, 255, 0.2);
+    --accent: #fff;
+    --link: #60a5fa;
+    --error: #f87171;
+    --success: #4ade80;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    position: relative;
+}
+
+/* Map Container */
+.map-container {
+    width: 100%;
+    height: calc(100vh - 56px);
+    background: var(--bg);
+}
+
+/* Navigation Bar - Bottom (Dark Mode) */
+.navbar {
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    z-index: 1000;
+}
+
+.navbar-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nav-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 32px;
+}
+
+/* Nav Buttons */
+.nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.nav-btn .logged-in {
+    color: #4ade80;
+}
+
+.nav-btn .logged-out {
+    color: #f87171;
+}
+
+/* Leaflet map background (prevents white flash on tile load) */
+.leaflet-container {
+    background: #000000 !important;
+}
+
+.leaflet-control-zoom a {
+    background: #262626 !important;
+    color: #e5e5e5 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 18px !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #333 !important;
+    color: #fff !important;
+}
+
+.leaflet-control-zoom-in {
+    border-radius: 8px 8px 0 0 !important;
+    border-bottom: none !important;
+}
+
+.leaflet-control-zoom-out {
+    border-radius: 0 0 8px 8px !important;
+}
+
+/* Leaflet popup (Dark Mode) */
+.leaflet-popup-content-wrapper {
+    background: #262626 !important;
+    color: #e5e5e5 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-popup-tip {
+    background: #262626 !important;
+}
+
+.leaflet-popup-close-button {
+    color: #9ca3af !important;
+}
+
+.leaflet-popup-close-button:hover {
+    color: #e5e5e5 !important;
+}
+
+/* Location popup link */
+.location-popup a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.location-popup a:hover {
+    text-decoration: underline;
+}
+
+/* Page content */
+.page-content {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.page-content h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--accent);
+}
+
+/* Links */
+a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Form Styles */
+.form-group {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text);
+    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Button */
+.btn {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 0;
+    color: var(--bg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+/* Toggle text */
+.toggle-text {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Messages */
+.error-message {
+    color: var(--error);
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+}
+
+.success-message {
+    color: var(--success);
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+}
+
+/* User info */
+.user-info {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-muted);
+}
+
+.info-value {
+    color: var(--text);
+}

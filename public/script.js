@@ -48,17 +48,28 @@ if (navigator.geolocation) {
 
 // Profile button elements
 const profileIcon = document.getElementById("profileIcon");
+const profileBtn = document.getElementById("profileBtn");
 
 // Update profile button based on auth state
 function updateProfileButton(user) {
     if (user) {
-        profileIcon.textContent = "✓";
-        profileIcon.className = "logged-in";
+        profileIcon.src = "/assets/user.svg";
+        profileIcon.alt = "Settings";
     } else {
-        profileIcon.textContent = "✕";
-        profileIcon.className = "logged-out";
+        profileIcon.src = "/assets/log-in.svg";
+        profileIcon.alt = "Login";
     }
 }
+
+// Profile button click handler
+profileBtn.addEventListener("click", async () => {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        window.location.href = `/user/${user.id}`;
+    } else {
+        window.location.href = "/auth";
+    }
+});
 
 // Check current user and update UI
 async function checkUser() {
@@ -129,10 +140,15 @@ loadMarkers();
 checkUser();
 
 // Auth functions (to be called from UI)
-async function signup(email, password) {
+async function signup(email, password, username) {
     const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
+        options: {
+            data: {
+                username,
+            },
+        },
     });
     return { data, error };
 }

@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
-import { type Location, locationTemplate } from "./templates.ts";
+import {
+  type Location,
+  locationTemplate,
+  authTemplate,
+  userSettingsTemplate,
+} from "./templates.ts";
 import process from "node:process";
 
 // Load environment variables
@@ -58,6 +63,27 @@ const server = Bun.serve({
     const url = new URL(req.url);
     const pathname = url.pathname;
 
+    // Auth page: /auth
+    if (pathname === "/auth") {
+      return new Response(authTemplate(), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // User settings page: /user/:uuid
+    if (pathname.startsWith("/user/")) {
+      const uuid = pathname.split("/")[2];
+
+      if (!uuid) {
+        return new Response("Not Found", { status: 404 });
+      }
+
+      // Render settings page - user info is fetched client-side
+      return new Response(userSettingsTemplate(uuid), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
     // Location pages: /location/:uuid
     if (pathname.startsWith("/location/")) {
       const uuid = pathname.split("/")[2];
@@ -77,9 +103,20 @@ const server = Bun.serve({
       });
     }
 
-    // Static files
+    // Serve assets from /assets/
+    if (pathname.startsWith("/assets/")) {
+      const file = Bun.file(".." + pathname);
+      if (await file.exists()) {
+        return new Response(file, {
+          headers: { "Content-Type": getContentType(pathname) },
+        });
+      }
+      return new Response("Not Found", { status: 404 });
+    }
+
+    // Serve public files (html, css, js)
     const filePath = pathname === "/" ? "/index.html" : pathname;
-    const file = Bun.file("." + filePath);
+    const file = Bun.file("../public" + filePath);
 
     if (await file.exists()) {
       return new Response(file, {
