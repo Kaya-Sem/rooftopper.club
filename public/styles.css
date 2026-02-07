@@ -220,8 +220,28 @@ a:hover {
     border-color: var(--accent);
 }
 
-.form-group input::placeholder {
+.form-group input::placeholder,
+.form-group textarea::placeholder {
     color: var(--text-muted);
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .form-group input:-webkit-autofill,
@@ -313,4 +333,46 @@ a:hover {
 
 .info-value {
     color: var(--text);
+}
+
+/* Add Location Icon */
+#addLocationIcon {
+    filter: brightness(0) invert(1);
+}
+
+/* Map selection mode */
+.map-selecting {
+    cursor: crosshair !important;
+}
+
+.map-selecting .leaflet-marker-icon,
+.map-selecting .leaflet-marker-shadow {
+    cursor: crosshair !important;
+}
+
+/* Selection mode indicator */
+.selection-hint {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    z-index: 1001;
+    display: none;
+}
+
+.selection-hint.visible {
+    display: block;
+}
+
+/* Add button active state */
+#addLocationBtn.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent);
 }

@@ -4,6 +4,7 @@ import {
   locationTemplate,
   authTemplate,
   userSettingsTemplate,
+  addLocationTemplate,
 } from "./templates.ts";
 import process from "node:process";
 import path from "node:path";
@@ -70,6 +71,16 @@ const server = Bun.serve({
     // Auth page: /auth
     if (pathname === "/auth") {
       return new Response(authTemplate(), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // Add location page: /add-location
+    if (pathname === "/add-location") {
+      const lat = url.searchParams.get("lat") || "0";
+      const lng = url.searchParams.get("lng") || "0";
+
+      return new Response(addLocationTemplate(lat, lng), {
         headers: { "Content-Type": "text/html" },
       });
     }

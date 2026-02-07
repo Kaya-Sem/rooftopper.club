@@ -50,6 +50,13 @@ if (navigator.geolocation) {
 const profileIcon = document.getElementById("profileIcon");
 const profileBtn = document.getElementById("profileBtn");
 
+// Add location button elements
+const addLocationBtn = document.getElementById("addLocationBtn");
+const mapContainer = document.getElementById("map");
+
+// Selection mode state
+let isSelectingLocation = false;
+
 // Update profile button based on auth state
 function updateProfileButton(user) {
     if (user) {
@@ -68,6 +75,74 @@ profileBtn.addEventListener("click", async () => {
         window.location.href = `/user/${user.id}`;
     } else {
         window.location.href = "/auth";
+    }
+});
+
+// Toggle selection mode
+function setSelectionMode(enabled) {
+    isSelectingLocation = enabled;
+    if (enabled) {
+        mapContainer.classList.add("map-selecting");
+        addLocationBtn.classList.add("active");
+        showSelectionHint();
+    } else {
+        mapContainer.classList.remove("map-selecting");
+        addLocationBtn.classList.remove("active");
+        hideSelectionHint();
+    }
+}
+
+// Selection hint element
+let selectionHint = null;
+
+function showSelectionHint() {
+    if (!selectionHint) {
+        selectionHint = document.createElement("div");
+        selectionHint.className = "selection-hint";
+        selectionHint.textContent = "Click on the map to select a location";
+        document.body.appendChild(selectionHint);
+    }
+    selectionHint.classList.add("visible");
+}
+
+function hideSelectionHint() {
+    if (selectionHint) {
+        selectionHint.classList.remove("visible");
+    }
+}
+
+// Add location button click handler
+addLocationBtn.addEventListener("click", async () => {
+    // Check if user is logged in
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    if (!user) {
+        // Redirect to auth page if not logged in
+        window.location.href = "/auth";
+        return;
+    }
+    
+    // Toggle selection mode
+    setSelectionMode(!isSelectingLocation);
+});
+
+// Map click handler for location selection
+map.on("click", (e) => {
+    if (!isSelectingLocation) return;
+    
+    const { lat, lng } = e.latlng;
+    
+    // Disable selection mode
+    setSelectionMode(false);
+    
+    // Navigate to add location page with coordinates
+    window.location.href = `/add-location?lat=${lat}&lng=${lng}`;
+});
+
+// Cancel selection mode with Escape key
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isSelectingLocation) {
+        setSelectionMode(false);
     }
 });
 
@@ -121,17 +196,11 @@ async function loadMarkers() {
             return;
         }
 
-        const popupContent = `
-            <div class="location-popup">
-                <strong>${location.name || "Unknown location"}</strong>
-                <br>
-                <a href="/location/${location.id}">View details →</a>
-            </div>
-        `;
-
         L.marker(coords)
             .addTo(map)
-            .bindPopup(popupContent);
+            .on("click", () => {
+                window.location.href = `/location/${location.id}`;
+            });
     });
 }
 

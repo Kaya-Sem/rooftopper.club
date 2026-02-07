@@ -293,3 +293,113 @@ export function userSettingsTemplate(userId: string): string {
 
   return baseTemplate("Settings", content);
 }
+
+// Add location page template
+export function addLocationTemplate(lat: string, lng: string): string {
+  const content = `
+  <main class="page-content">
+    <h1>Add Location</h1>
+    
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    
+    <div class="user-info">
+      <div class="info-row">
+        <span class="info-label">Coordinates</span>
+        <span class="info-value">${escapeHtml(lat)}, ${escapeHtml(lng)}</span>
+      </div>
+    </div>
+    
+    <form id="addLocationForm" style="width: 100%;">
+      <input type="hidden" id="latitude" value="${escapeHtml(lat)}" />
+      <input type="hidden" id="longitude" value="${escapeHtml(lng)}" />
+      
+      <div class="form-group">
+        <label for="name">Name *</label>
+        <input type="text" id="name" name="name" required placeholder="Location name" />
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" placeholder="Optional description" rows="3"></textarea>
+      </div>
+      
+      <button type="submit" class="btn" id="submitBtn">Save Location</button>
+    </form>
+    
+    <a href="/" style="margin-top: 16px;">← Cancel</a>
+  </main>
+  
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://nmgkxaltewyumrtmdort.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    const addLocationForm = document.getElementById("addLocationForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const errorMessage = document.getElementById("errorMessage");
+    
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = "block";
+    }
+    
+    function hideError() {
+      errorMessage.style.display = "none";
+    }
+    
+    // Check if user is logged in
+    async function checkAuth() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        window.location.href = "/auth";
+      }
+    }
+    
+    checkAuth();
+    
+    addLocationForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+      
+      const name = document.getElementById("name").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const lat = document.getElementById("latitude").value;
+      const lng = document.getElementById("longitude").value;
+      
+      if (!name) {
+        showError("Name is required");
+        return;
+      }
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+      
+      try {
+        // Format coordinate as PostgreSQL point: (lat,lng)
+        const coordinate = "(" + lat + "," + lng + ")";
+        
+        const { data, error } = await supabaseClient
+          .from("locations")
+          .insert({
+            name: name,
+            description: description || null,
+            coordinate: coordinate
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Redirect to home page on success
+        window.location.href = "/";
+      } catch (error) {
+        showError(error.message || "Failed to save location");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Location";
+      }
+    });
+  </script>`;
+
+  return baseTemplate("Add Location", content);
+}
