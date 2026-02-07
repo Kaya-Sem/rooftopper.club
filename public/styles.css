@@ -423,6 +423,18 @@ a:hover {
     color: var(--text);
 }
 
+.comment-form-container {
+    margin-top: 16px;
+}
+
+.comment-form-container .form-group {
+    margin-bottom: 12px;
+}
+
+.comment-form-container .btn {
+    margin-top: 4px;
+}
+
 /* Add Location Icon */
 #addLocationIcon {
     filter: brightness(0) invert(1);

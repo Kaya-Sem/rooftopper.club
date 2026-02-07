@@ -93,8 +93,10 @@ function updateUrlFromMap() {
     history.replaceState(null, "", newUrl);
 }
 
-// Initialize the map
-const map = L.map("map", {
+// Initialize the map (only on main page; location detail page has no #map and does not load Leaflet)
+let map;
+if (document.getElementById("map")) {
+map = L.map("map", {
     zoomControl: false,
     attributionControl: false,
 }).setView([40.7128, -74.0060], 13); // Default to New York City
@@ -306,6 +308,66 @@ async function loadMarkers() {
 // Uncomment to load markers when ready:
 loadMarkers();
 checkUser();
+}
+// Location detail page: comment form for logged-in users
+if (document.getElementById("comment-form-container")) {
+    initLocationCommentForm();
+}
+
+async function initLocationCommentForm() {
+    const container = document.getElementById("comment-form-container");
+    const form = document.getElementById("commentForm");
+    const section = document.querySelector(".comments-section[data-location-id]");
+    const locationId = section ? section.getAttribute("data-location-id") : null;
+    if (!locationId || !form) return;
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    const errorEl = document.getElementById("commentFormError");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const textarea = form.querySelector("#commentBody");
+        const text = (textarea && textarea.value || "").trim();
+        if (!text) {
+            if (errorEl) {
+                errorEl.textContent = "Please enter a comment.";
+                errorEl.style.display = "block";
+            }
+            return;
+        }
+        if (errorEl) errorEl.style.display = "none";
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Posting...";
+        }
+
+        const { error } = await supabaseClient
+            .from("location_comments")
+            .insert({ location: locationId, comment: text, submitter: user.id });
+
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Post comment";
+        }
+
+        if (error) {
+            if (errorEl) {
+                errorEl.textContent = error.message || "Failed to post comment.";
+                errorEl.style.display = "block";
+            }
+            return;
+        }
+        window.location.reload();
+    });
+}
 
 // Auth functions (to be called from UI)
 async function signup(email, password, username) {

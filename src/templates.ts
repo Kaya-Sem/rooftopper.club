@@ -104,9 +104,19 @@ export function locationTemplate(location: LocationDetail): string {
       </div>
       ${authorLine}
     </div>
-    <section class="comments-section">
+    <section class="comments-section" data-location-id="${escapeHtml(location.id)}">
       <h2 class="comments-title">Comments</h2>
       <div class="comments-list">${commentsHtml}</div>
+      <div id="comment-form-container" class="comment-form-container" style="display: none;">
+        <form id="commentForm">
+          <div class="form-group">
+            <label for="commentBody">Add a comment</label>
+            <textarea id="commentBody" name="comment" rows="3" placeholder="Write a comment..." required></textarea>
+          </div>
+          <button type="submit" class="btn">Post comment</button>
+        </form>
+        <div id="commentFormError" class="error-message" style="display: none;"></div>
+      </div>
     </section>
     <a href="#" id="locationBackLink">← Back</a>
   </main>
@@ -115,7 +125,9 @@ export function locationTemplate(location: LocationDetail): string {
       e.preventDefault();
       history.back();
     });
-  </script>`;
+  </script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/script.js"></script>`;
 
   return baseTemplate(location.name, content);
 }
