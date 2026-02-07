@@ -5,13 +5,100 @@ const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
 // Initialize Supabase client (using CDN global)
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Parse coordinate string "(lat,lng)" to [lat, lng] array
+function parseCoordinate(coordStr) {
+    const match = coordStr && coordStr.match(/\(([^,]+),([^)]+)\)/);
+    if (match) {
+        return [parseFloat(match[1]), parseFloat(match[2])];
+    }
+    return null;
+}
+
+// Location types (public enum); unknown DB values normalize to "unspecified"
+const LOCATION_TYPES = [
+    "highrise", "midrise", "crane", "smokestack", "antenna",
+    "construction", "industrial", "bridge", "tower", "unspecified",
+];
+
+// Client-side Location model: typed fields + parsed coordinates
+class Location {
+    constructor({ id, name, coordinate, created_at, description, type, latLng }) {
+        this.id = id;
+        this.name = name;
+        this.coordinate = coordinate;
+        this.created_at = created_at;
+        this.description = description ?? null;
+        this.type = type;
+        this.latLng = latLng;
+    }
+
+    static fromSupabase(row) {
+        const latLng = parseCoordinate(row.coordinate);
+        const type = LOCATION_TYPES.includes(row.type) ? row.type : "unspecified";
+        return new Location({
+            id: row.id,
+            name: row.name,
+            coordinate: row.coordinate,
+            created_at: row.created_at,
+            description: row.description ?? null,
+            type,
+            latLng,
+        });
+    }
+}
+
+const LOCATION_TYPE_MARKERS = {
+    highrise: "🏢",
+    midrise: "🏬",
+    crane: "🏗️",
+    smokestack: "🏭",
+    antenna: "📡",
+    construction: "🚧",
+    industrial: "🏭",
+    bridge: "🌉",
+    tower: "🗼",
+    unspecified: "📍",
+};
+
+function getMarkerEmoji(location) {
+    const type = location && location.type;
+    return LOCATION_TYPE_MARKERS[type] ?? LOCATION_TYPE_MARKERS.unspecified;
+}
+
+// Parse lat, lng, z from URL; return { lat, lng, z } if valid, else null
+function getMapViewFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lng = parseFloat(params.get("lng"));
+    const z = parseInt(params.get("z"), 10);
+    if (
+        Number.isFinite(lat) && lat >= -90 && lat <= 90 &&
+        Number.isFinite(lng) && lng >= -180 && lng <= 180 &&
+        Number.isFinite(z) && z >= 0 && z <= 20
+    ) {
+        return { lat, lng, z };
+    }
+    return null;
+}
+
+// Update URL to reflect current map center and zoom (no new history entry)
+function updateUrlFromMap() {
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const params = new URLSearchParams();
+    params.set("lat", center.lat.toFixed(5));
+    params.set("lng", center.lng.toFixed(5));
+    params.set("z", String(zoom));
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    history.replaceState(null, "", newUrl);
+}
+
 // Initialize the map
 const map = L.map("map", {
     zoomControl: false,
     attributionControl: false,
 }).setView([40.7128, -74.0060], 13); // Default to New York City
 
-// Add zoom control to bottom right
 L.control.zoom({
     position: "bottomright",
 }).addTo(map);
@@ -27,12 +114,24 @@ const darkTiles = L.tileLayer(
 
 darkTiles.addTo(map);
 
-// Try to get user's location
-if (navigator.geolocation) {
+// Apply URL view if valid; otherwise keep default (NYC)
+const urlView = getMapViewFromUrl();
+const hasUrlMapPosition = urlView !== null;
+if (urlView) {
+    map.setView([urlView.lat, urlView.lng], urlView.z);
+}
+
+// Keep URL in sync with map view on pan/zoom
+map.on("moveend", updateUrlFromMap);
+updateUrlFromMap();
+
+// Only ask for user location when no map position is present in the URL (e.g. on refresh with params we skip the prompt)
+if (!hasUrlMapPosition && navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
             map.setView([latitude, longitude], 14);
+            updateUrlFromMap();
         },
         (error) => {
             console.log("Geolocation error:", error.message);
@@ -176,27 +275,27 @@ async function fetchLocations() {
     return data;
 }
 
-// Parse coordinate string "(lat,lng)" to [lat, lng] array
-function parseCoordinate(coordStr) {
-    const match = coordStr.match(/\(([^,]+),([^)]+)\)/);
-    if (match) {
-        return [parseFloat(match[1]), parseFloat(match[2])];
-    }
-    return null;
-}
-
 // Add markers from database
 async function loadMarkers() {
-    const locations = await fetchLocations();
+    const rows = await fetchLocations();
 
-    locations.forEach((location) => {
-        const coords = parseCoordinate(location.coordinate);
-        if (!coords) {
+    rows.forEach((row) => {
+        const location = Location.fromSupabase(row);
+        if (!location.latLng) {
             console.warn("Invalid coordinate for location:", location.id);
             return;
         }
 
-        L.marker(coords)
+        const emoji = getMarkerEmoji(location);
+        const title = location.name.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const icon = L.divIcon({
+            html: `<span class="location-marker-emoji" title="${title}">${emoji}</span>`,
+            className: "location-emoji-marker",
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+        });
+
+        L.marker(location.latLng, { icon })
             .addTo(map)
             .on("click", () => {
                 window.location.href = `/location/${location.id}`;

@@ -173,6 +173,14 @@ body {
     margin: 0 auto;
 }
 
+.page-content--left {
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin: 0;
+    max-width: 480px;
+    padding-top: 24px;
+}
+
 .page-content h1 {
     font-size: 1.5rem;
     font-weight: 600;
@@ -240,6 +248,24 @@ a:hover {
 }
 
 .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-group select {
+    width: 100%;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+.form-group select:focus {
     outline: none;
     border-color: var(--accent);
 }
@@ -335,6 +361,68 @@ a:hover {
     color: var(--text);
 }
 
+.info-value a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.info-value a:hover {
+    text-decoration: underline;
+}
+
+/* Comments section (location detail) */
+.comments-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.comments-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comments-empty {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    padding: 8px 0;
+}
+
+.comment-block {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+}
+
+.comment-block:last-child {
+    border-bottom: none;
+}
+
+.comment-meta {
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.comment-meta a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.comment-meta a:hover {
+    text-decoration: underline;
+}
+
+.comment-body {
+    color: var(--text);
+}
+
 /* Add Location Icon */
 #addLocationIcon {
     filter: brightness(0) invert(1);
@@ -375,4 +463,19 @@ a:hover {
 #addLocationBtn.active {
     background: rgba(255, 255, 255, 0.2);
     border-color: var(--accent);
+}
+
+/* Emoji markers on map (replaces default blue pin) */
+.location-emoji-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.location-marker-emoji {
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    display: block;
+    text-align: center;
 }

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import {
-  type Location,
+  type LocationDetail,
+  type User,
+  type LocationComment,
   locationTemplate,
   authTemplate,
   userSettingsTemplate,
@@ -26,20 +28,69 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Fetch location by UUID
-async function getLocation(uuid: string): Promise<Location | null> {
-  const { data, error } = await supabase
+function toUser(row: { id: string; username: string | null } | null): User | null {
+  if (row == null) return null;
+  return { id: row.id, username: row.username };
+}
+
+// Fetch location by UUID with author and comments
+async function getLocationWithDetails(uuid: string): Promise<LocationDetail | null> {
+  const { data: locationRow, error: locationError } = await supabase
     .from("locations")
-    .select("*")
+    .select("*, author:users(*)")
     .eq("id", uuid)
     .single();
 
-  if (error) {
-    console.error("Error fetching location:", error);
+  if (locationError || !locationRow) {
+    if (locationError) console.error("Error fetching location:", locationError);
     return null;
   }
 
-  return data;
+  const { data: commentRows, error: commentsError } = await supabase
+    .from("location_comments")
+    .select("id, created_at, comment, location, users(id, username)")
+    .eq("location", uuid)
+    .order("created_at", { ascending: true });
+
+  if (commentsError) {
+    console.error("Error fetching location comments:", commentsError);
+  } else if ((commentRows ?? []).length === 0 && process.env.NODE_ENV !== "production") {
+    console.warn("Location comments query returned 0 rows for location", uuid, "- check RLS policies on location_comments if you expect comments.");
+  }
+
+  // Supabase returns the referenced table under its table name ("users"); may be object or array
+  type CommentRow = {
+    id: string;
+    created_at: string;
+    comment: string | null;
+    location: string | null;
+    submitter?: { id: string; username: string | null } | null;
+    users?: { id: string; username: string | null } | { id: string; username: string | null }[] | null;
+  };
+  const comments: LocationComment[] = (commentRows ?? []).map((row: CommentRow) => {
+    const raw = row.submitter ?? row.users ?? null;
+    const submitterUser = Array.isArray(raw) ? raw[0] ?? null : raw;
+    return {
+      id: row.id,
+      created_at: row.created_at,
+      comment: row.comment,
+      submitter: toUser(submitterUser),
+    };
+  });
+
+  const author = locationRow.author != null
+    ? toUser(Array.isArray(locationRow.author) ? locationRow.author[0] : locationRow.author)
+    : null;
+
+  return {
+    id: locationRow.id,
+    name: locationRow.name,
+    coordinate: locationRow.coordinate,
+    created_at: locationRow.created_at,
+    description: locationRow.description ?? null,
+    author,
+    comments,
+  };
 }
 
 // Content type mapping
@@ -60,7 +111,6 @@ function getContentType(path: string): string {
   return contentTypes[ext] || "application/octet-stream";
 }
 
-// Start the server
 const server = Bun.serve({
   port: process.env.PORT || 3000,
 
@@ -107,7 +157,7 @@ const server = Bun.serve({
         return new Response("Not Found", { status: 404 });
       }
 
-      const location = await getLocation(uuid);
+      const location = await getLocationWithDetails(uuid);
 
       if (!location) {
         return new Response("Not Found", { status: 404 });

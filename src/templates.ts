@@ -26,29 +26,96 @@ export function baseTemplate(title: string, content: string): string {
 }
 
 // Location page template
+export interface User {
+  id: string;
+  username: string | null;
+}
+
+export interface LocationComment {
+  id: string;
+  created_at: string;
+  comment: string | null;
+  submitter: User | null;
+}
+
 export interface Location {
   id: string;
   name: string;
   coordinate: string;
   created_at: string;
+  description?: string | null;
 }
 
-export function locationTemplate(location: Location): string {
+export interface LocationDetail extends Location {
+  author?: User | null;
+  comments?: LocationComment[];
+}
+
+export function locationTemplate(location: LocationDetail): string {
+  const description = location.description?.trim() ?? "";
+  const authorLine =
+    location.author != null
+      ? `<div class="info-row">
+        <span class="info-label">Added by</span>
+        <span class="info-value"><a href="/user/${escapeHtml(location.author.id)}">${escapeHtml(location.author.username ?? "Unknown user")}</a></span>
+      </div>`
+      : "";
+
+  const comments = location.comments ?? [];
+  const commentsHtml =
+    comments.length === 0
+      ? "<p class=\"comments-empty\">No comments yet.</p>"
+      : comments
+          .map(
+            (c) => {
+              const submitterLabel =
+                c.submitter != null
+                  ? escapeHtml(c.submitter.username ?? "Unknown user")
+                  : "Anonymous";
+              const submitterLink =
+                c.submitter != null
+                  ? `<a href="/user/${escapeHtml(c.submitter.id)}">${submitterLabel}</a>`
+                  : submitterLabel;
+              const dateStr = new Date(c.created_at).toLocaleDateString();
+              const body = escapeHtml(c.comment ?? "");
+              return `<div class="comment-block">
+                <div class="comment-meta">${submitterLink} · ${dateStr}</div>
+                <div class="comment-body">${body}</div>
+              </div>`;
+            }
+          )
+          .join("\n");
+
   const content = `
-  <main class="page-content">
+  <main class="page-content page-content--left">
     <h1>${escapeHtml(location.name)}</h1>
     <div class="user-info">
       <div class="info-row">
         <span class="info-label">Coordinates</span>
         <span class="info-value">${escapeHtml(location.coordinate)}</span>
       </div>
+      ${description ? `<div class="info-row">
+        <span class="info-label">Description</span>
+        <span class="info-value">${escapeHtml(description)}</span>
+      </div>` : ""}
       <div class="info-row">
-        <span class="info-label">Added</span>
+        <span class="info-label">Date added</span>
         <span class="info-value">${new Date(location.created_at).toLocaleDateString()}</span>
       </div>
+      ${authorLine}
     </div>
-    <a href="/">← Back</a>
-  </main>`;
+    <section class="comments-section">
+      <h2 class="comments-title">Comments</h2>
+      <div class="comments-list">${commentsHtml}</div>
+    </section>
+    <a href="#" id="locationBackLink">← Back</a>
+  </main>
+  <script>
+    document.getElementById("locationBackLink").addEventListener("click", function (e) {
+      e.preventDefault();
+      history.back();
+    });
+  </script>`;
 
   return baseTemplate(location.name, content);
 }
@@ -294,10 +361,28 @@ export function userSettingsTemplate(userId: string): string {
   return baseTemplate("Settings", content);
 }
 
+// Location types (must match script.js / DB enum)
+const LOCATION_TYPES = [
+  "highrise",
+  "midrise",
+  "crane",
+  "smokestack",
+  "antenna",
+  "construction",
+  "industrial",
+  "bridge",
+  "tower",
+  "unspecified",
+];
+
 // Add location page template
 export function addLocationTemplate(lat: string, lng: string): string {
+  const typeOptions = LOCATION_TYPES.map(
+    (t) =>
+      `<option value="${escapeHtml(t)}"${t === "unspecified" ? " selected" : ""}>${escapeHtml(t)}</option>`
+  ).join("\n      ");
   const content = `
-  <main class="page-content">
+  <main class="page-content page-content--left">
     <h1>Add Location</h1>
     
     <div id="errorMessage" class="error-message" style="display: none;"></div>
@@ -316,6 +401,13 @@ export function addLocationTemplate(lat: string, lng: string): string {
       <div class="form-group">
         <label for="name">Name *</label>
         <input type="text" id="name" name="name" required placeholder="Location name" />
+      </div>
+      
+      <div class="form-group">
+        <label for="type">Type</label>
+        <select id="type" name="type">
+      ${typeOptions}
+        </select>
       </div>
       
       <div class="form-group">
@@ -363,6 +455,7 @@ export function addLocationTemplate(lat: string, lng: string): string {
       hideError();
       
       const name = document.getElementById("name").value.trim();
+      const type = document.getElementById("type").value;
       const description = document.getElementById("description").value.trim();
       const lat = document.getElementById("latitude").value;
       const lng = document.getElementById("longitude").value;
@@ -383,6 +476,7 @@ export function addLocationTemplate(lat: string, lng: string): string {
           .from("locations")
           .insert({
             name: name,
+            type: type,
             description: description || null,
             coordinate: coordinate
           })
