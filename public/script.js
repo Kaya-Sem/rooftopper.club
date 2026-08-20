@@ -321,10 +321,10 @@ if (document.getElementById("location-image-upload")) {
 
 async function initLocationImageUpload() {
     const uploadBlock = document.getElementById("location-image-upload");
-    const form = document.getElementById("locationImageForm");
     const section = document.querySelector(".location-photos-section[data-location-id]");
     const locationId = section ? section.getAttribute("data-location-id") : null;
-    if (!locationId || !form || !uploadBlock) return;
+    const fileInput = document.getElementById("locationImageInput");
+    if (!locationId || !uploadBlock || !fileInput) return;
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -332,9 +332,11 @@ async function initLocationImageUpload() {
         return;
     }
 
-    uploadBlock.style.display = "block";
+    uploadBlock.style.display = "flex";
+    const emptyEl = document.getElementById("locationPhotosEmpty");
+    if (emptyEl) emptyEl.style.display = "none";
+
     const errorEl = document.getElementById("locationImageError");
-    const fileInput = document.getElementById("locationImageInput");
     const MAX_SIZE_BYTES = 6 * 1024 * 1024; // 6MB
     const ALLOWED_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -349,20 +351,13 @@ async function initLocationImageUpload() {
         if (errorEl) errorEl.style.display = "none";
     }
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    fileInput.addEventListener("change", async () => {
         hideError();
-        const files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
-        if (files.length === 0) {
-            showError("Please select one or more images (JPEG, PNG, or WebP).");
-            return;
-        }
+        const files = fileInput.files ? Array.from(fileInput.files) : [];
+        if (files.length === 0) return;
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Uploading...";
-        }
+        uploadBlock.classList.add("is-uploading");
+        fileInput.disabled = true;
 
         try {
             for (const file of files) {
@@ -396,10 +391,9 @@ async function initLocationImageUpload() {
                 window.location.reload();
             }
         } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Upload";
-            }
+            uploadBlock.classList.remove("is-uploading");
+            fileInput.disabled = false;
+            fileInput.value = "";
         }
     });
 }

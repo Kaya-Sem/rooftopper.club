@@ -10,6 +10,7 @@
     --text-muted: #9ca3af;
     --border: rgba(255, 255, 255, 0.2);
     --accent: #fff;
+    --btn-bg: #262626;
     --link: #60a5fa;
     --error: #f87171;
     --success: #4ade80;
@@ -177,8 +178,63 @@ body {
     align-items: flex-start;
     justify-content: flex-start;
     margin: 0 auto;
-    max-width: 480px;
+    max-width: 600px;
     padding-top: 24px;
+}
+
+/* Location banner (location detail) */
+.location-banner {
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    background: var(--bg);
+    margin-bottom: 20px;
+}
+
+.location-banner--empty {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+.location-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.location-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-top: -12px;
+    margin-bottom: 20px;
+}
+
+/* Location actions (location detail) */
+.location-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.location-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.location-action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
 }
 
 .page-content h1 {
@@ -284,10 +340,10 @@ a:hover {
     appearance: none;
     width: 100%;
     padding: 12px;
-    background: var(--accent);
+    background: var(--btn-bg);
     border: none;
     border-radius: 0;
-    color: var(--bg);
+    color: var(--text);
     font-size: 0.875rem;
     font-weight: 600;
     font-family: 'Inter', sans-serif;
@@ -455,25 +511,22 @@ a:hover {
     margin-bottom: 12px;
 }
 
-.location-photos-list {
-    margin-bottom: 12px;
-}
-
 .location-photos-empty {
     color: var(--text-muted);
     font-size: 0.875rem;
     padding: 8px 0;
+    margin-bottom: 12px;
 }
 
 .location-photos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
+    margin-bottom: 12px;
 }
 
 .location-photo-link {
     display: block;
-    border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--bg);
@@ -487,30 +540,46 @@ a:hover {
     display: block;
 }
 
-.location-image-upload {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
+.location-photo-upload-tile {
+    aspect-ratio: 1;
+    border: 1px dashed var(--border);
+    transition: opacity 0.2s, border-color 0.2s;
 }
 
-.location-image-upload .form-group {
-    margin-bottom: 12px;
+.location-photo-upload-tile.is-uploading {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
-.location-image-upload .btn {
-    margin-top: 4px;
+.location-photo-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
 }
 
-.location-image-upload input[type="file"] {
-    padding: 8px 0;
-    color: var(--text-muted);
-    font-size: 0.875rem;
+.location-photo-upload-tile:hover {
+    border-color: var(--accent);
+}
+
+.location-photo-upload-icon {
+    width: 28px;
+    height: 28px;
+    filter: brightness(0) invert(1);
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.location-photo-upload-tile:hover .location-photo-upload-icon {
+    opacity: 0.9;
 }
 
 /* Comments section (location detail) */
 .comments-section {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 48px;
 }
 
 .comments-title {
@@ -564,12 +633,66 @@ a:hover {
     margin-top: 16px;
 }
 
-.comment-form-container .form-group {
-    margin-bottom: 12px;
+.comment-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
 }
 
-.comment-form-container .btn {
-    margin-top: 4px;
+.comment-input-row:focus-within {
+    border-color: var(--accent);
+}
+
+.comment-input-row textarea {
+    flex: 1;
+    width: auto;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.4;
+    max-height: 120px;
+    resize: none;
+}
+
+.comment-input-row textarea:focus {
+    outline: none;
+}
+
+.comment-submit-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: var(--btn-bg);
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.comment-submit-btn:hover {
+    opacity: 0.9;
+}
+
+.comment-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.comment-submit-icon {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
 }
 
 /* Add Location Icon */

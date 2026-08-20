@@ -70,6 +70,16 @@ export interface UserProfile {
   locations: UserProfileLocation[];
 }
 
+// Parse a Postgres point string "(lat,lng)" into a Google Maps URL
+function coordinateToMapsUrl(coordinate: string): string | null {
+  const match = coordinate.match(/\(([^,]+),([^)]+)\)/);
+  if (!match) return null;
+  const lat = parseFloat(match[1]);
+  const lng = parseFloat(match[2]);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
 export function locationTemplate(
   location: LocationDetail,
   storagePublicBaseUrl?: string,
@@ -124,26 +134,40 @@ export function locationTemplate(
       )
       .join("\n")
     : "";
-  const photosSectionHtml = images.length === 0
-    ? '<p class="location-photos-empty">No photos yet.</p>'
-    : `<div class="location-photos-grid">${imagesHtml}</div>`;
+  const uploadTileHtml = `<div id="location-image-upload" class="location-photo-upload-tile" style="display: none;">
+        <label for="locationImageInput" class="location-photo-upload-label">
+          <img src="/assets/image-plus.svg" alt="Add photos" class="location-photo-upload-icon" />
+        </label>
+        <input type="file" id="locationImageInput" name="images" accept="image/jpeg,image/png,image/webp" multiple hidden />
+      </div>`;
+  const photosEmptyHtml = images.length === 0
+    ? '<p id="locationPhotosEmpty" class="location-photos-empty">No photos yet.</p>'
+    : "";
+
+  const bannerImage = storagePublicBaseUrl && images.length > 0
+    ? storagePublicBaseUrl + "/" + images[0].storage_path
+    : null;
+  const bannerHtml = bannerImage
+    ? `<div class="location-banner"><img src="${
+      escapeHtml(bannerImage)
+    }" alt="${escapeHtml(location.name)}" class="location-banner-img" /></div>`
+    : `<div class="location-banner location-banner--empty"></div>`;
+
+  const mapsUrl = coordinateToMapsUrl(location.coordinate);
+  const actionsHtml = mapsUrl
+    ? `<div class="location-actions">
+      <a class="location-action-btn" href="${
+      escapeHtml(mapsUrl)
+    }" target="_blank" rel="noopener">Open in Google Maps</a>
+    </div>`
+    : "";
 
   const content = `
   <main class="page-content page-content--left">
+    ${bannerHtml}
     <h1>${escapeHtml(location.name)}</h1>
+    ${description ? `<p class="location-description">${escapeHtml(description)}</p>` : ""}
     <div class="user-info">
-      <div class="info-row">
-        <span class="info-label">Coordinates</span>
-        <span class="info-value">${escapeHtml(location.coordinate)}</span>
-      </div>
-      ${
-    description
-      ? `<div class="info-row">
-        <span class="info-label">Description</span>
-        <span class="info-value">${escapeHtml(description)}</span>
-      </div>`
-      : ""
-  }
       <div class="info-row">
         <span class="info-label">Date added</span>
         <span class="info-value">${
@@ -152,21 +176,14 @@ export function locationTemplate(
       </div>
       ${authorLine}
     </div>
+    ${actionsHtml}
     <section class="location-photos-section" data-location-id="${
     escapeHtml(location.id)
   }">
       <h2 class="location-photos-title">Photos</h2>
-      <div class="location-photos-list">${photosSectionHtml}</div>
-      <div id="location-image-upload" class="location-image-upload" style="display: none;">
-        <form id="locationImageForm">
-          <div class="form-group">
-            <label for="locationImageInput">Add photos</label>
-            <input type="file" id="locationImageInput" name="images" accept="image/jpeg,image/png,image/webp" multiple />
-          </div>
-          <button type="submit" class="btn">Upload</button>
-        </form>
-        <div id="locationImageError" class="error-message" style="display: none;"></div>
-      </div>
+      ${photosEmptyHtml}
+      <div class="location-photos-grid">${imagesHtml}${uploadTileHtml}</div>
+      <div id="locationImageError" class="error-message" style="display: none;"></div>
     </section>
     <section class="comments-section" data-location-id="${
     escapeHtml(location.id)
@@ -175,11 +192,12 @@ export function locationTemplate(
       <div class="comments-list">${commentsHtml}</div>
       <div id="comment-form-container" class="comment-form-container" style="display: none;">
         <form id="commentForm">
-          <div class="form-group">
-            <label for="commentBody">Add a comment</label>
-            <textarea id="commentBody" name="comment" rows="3" placeholder="Write a comment..." required></textarea>
+          <div class="comment-input-row">
+            <textarea id="commentBody" name="comment" rows="1" placeholder="Write a comment..." aria-label="Add a comment" required></textarea>
+            <button type="submit" class="comment-submit-btn" aria-label="Post comment" title="Post comment">
+              <img src="/assets/send.svg" alt="" class="comment-submit-icon" />
+            </button>
           </div>
-          <button type="submit" class="btn">Post comment</button>
         </form>
         <div id="commentFormError" class="error-message" style="display: none;"></div>
       </div>
