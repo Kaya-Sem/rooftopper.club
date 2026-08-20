@@ -6,6 +6,7 @@ import {
   type UserProfile,
   locationTemplate,
   authTemplate,
+  aboutTemplate,
   userProfileTemplate,
   addLocationTemplate,
 } from "./templates.ts";
@@ -171,6 +172,13 @@ const server = Bun.serve({
     // Auth page: /auth
     if (pathname === "/auth") {
       return new Response(authTemplate(), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // About page: /about
+    if (pathname === "/about") {
+      return new Response(aboutTemplate(), {
         headers: { "Content-Type": "text/html" },
       });
     }

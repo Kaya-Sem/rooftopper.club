@@ -1,4 +1,3 @@
-// HTML escape helper to prevent XSS
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -8,7 +7,6 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
-// Base HTML template wrapper
 export function baseTemplate(title: string, content: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -71,62 +69,63 @@ export interface UserProfile {
   locations: UserProfileLocation[];
 }
 
-/** Base URL for the images bucket public URLs (e.g. https://xxx.supabase.co/storage/v1/object/public/images). */
 export function locationTemplate(
   location: LocationDetail,
   storagePublicBaseUrl?: string,
 ): string {
   const description = location.description?.trim() ?? "";
-  const authorLine =
-    location.author != null
-      ? `<div class="info-row">
+  const authorLine = location.author != null
+    ? `<div class="info-row">
         <span class="info-label">Added by</span>
-        <span class="info-value"><a href="/user/${escapeHtml(location.author.id)}">${escapeHtml(location.author.username ?? "Unknown user")}</a></span>
+        <span class="info-value"><a href="/user/${
+      escapeHtml(location.author.id)
+    }">${escapeHtml(location.author.username ?? "Unknown user")}</a></span>
       </div>`
-      : "";
+    : "";
 
   const comments = location.comments ?? [];
-  const commentsHtml =
-    comments.length === 0
-      ? "<p class=\"comments-empty\">No comments yet.</p>"
-      : comments
-          .map(
-            (c) => {
-              const submitterLabel =
-                c.submitter != null
-                  ? escapeHtml(c.submitter.username ?? "Unknown user")
-                  : "Anonymous";
-              const submitterLink =
-                c.submitter != null
-                  ? `<a href="/user/${escapeHtml(c.submitter.id)}">${submitterLabel}</a>`
-                  : submitterLabel;
-              const dateStr = new Date(c.created_at).toLocaleDateString();
-              const body = escapeHtml(c.comment ?? "");
-              return `<div class="comment-block">
+  const commentsHtml = comments.length === 0
+    ? '<p class="comments-empty">No comments yet.</p>'
+    : comments
+      .map(
+        (c) => {
+          const submitterLabel = c.submitter != null
+            ? escapeHtml(c.submitter.username ?? "Unknown user")
+            : "Anonymous";
+          const submitterLink = c.submitter != null
+            ? `<a href="/user/${
+              escapeHtml(c.submitter.id)
+            }">${submitterLabel}</a>`
+            : submitterLabel;
+          const dateStr = new Date(c.created_at).toLocaleDateString();
+          const body = escapeHtml(c.comment ?? "");
+          return `<div class="comment-block">
                 <div class="comment-meta">${submitterLink} · ${dateStr}</div>
                 <div class="comment-body">${body}</div>
               </div>`;
-            }
-          )
-          .join("\n");
+        },
+      )
+      .join("\n");
 
   const images = location.images ?? [];
-  const imagesHtml =
-    storagePublicBaseUrl && images.length > 0
-      ? images
-          .map(
-            (img, i) => {
-              const url = storagePublicBaseUrl + "/" + img.storage_path;
-              const alt = `Photo ${i + 1} for ${escapeHtml(location.name)}`;
-              return `<a href="${escapeHtml(url)}" class="location-photo-link" target="_blank" rel="noopener"><img src="${escapeHtml(url)}" alt="${alt}" class="location-photo-img" loading="lazy" /></a>`;
-            },
-          )
-          .join("\n")
-      : "";
-  const photosSectionHtml =
-    images.length === 0
-      ? "<p class=\"location-photos-empty\">No photos yet.</p>"
-      : `<div class="location-photos-grid">${imagesHtml}</div>`;
+  const imagesHtml = storagePublicBaseUrl && images.length > 0
+    ? images
+      .map(
+        (img, i) => {
+          const url = storagePublicBaseUrl + "/" + img.storage_path;
+          const alt = `Photo ${i + 1} for ${escapeHtml(location.name)}`;
+          return `<a href="${
+            escapeHtml(url)
+          }" class="location-photo-link" target="_blank" rel="noopener"><img src="${
+            escapeHtml(url)
+          }" alt="${alt}" class="location-photo-img" loading="lazy" /></a>`;
+        },
+      )
+      .join("\n")
+    : "";
+  const photosSectionHtml = images.length === 0
+    ? '<p class="location-photos-empty">No photos yet.</p>'
+    : `<div class="location-photos-grid">${imagesHtml}</div>`;
 
   const content = `
   <main class="page-content page-content--left">
@@ -136,17 +135,25 @@ export function locationTemplate(
         <span class="info-label">Coordinates</span>
         <span class="info-value">${escapeHtml(location.coordinate)}</span>
       </div>
-      ${description ? `<div class="info-row">
+      ${
+    description
+      ? `<div class="info-row">
         <span class="info-label">Description</span>
         <span class="info-value">${escapeHtml(description)}</span>
-      </div>` : ""}
+      </div>`
+      : ""
+  }
       <div class="info-row">
         <span class="info-label">Date added</span>
-        <span class="info-value">${new Date(location.created_at).toLocaleDateString()}</span>
+        <span class="info-value">${
+    new Date(location.created_at).toLocaleDateString()
+  }</span>
       </div>
       ${authorLine}
     </div>
-    <section class="location-photos-section" data-location-id="${escapeHtml(location.id)}">
+    <section class="location-photos-section" data-location-id="${
+    escapeHtml(location.id)
+  }">
       <h2 class="location-photos-title">Photos</h2>
       <div class="location-photos-list">${photosSectionHtml}</div>
       <div id="location-image-upload" class="location-image-upload" style="display: none;">
@@ -160,7 +167,9 @@ export function locationTemplate(
         <div id="locationImageError" class="error-message" style="display: none;"></div>
       </div>
     </section>
-    <section class="comments-section" data-location-id="${escapeHtml(location.id)}">
+    <section class="comments-section" data-location-id="${
+    escapeHtml(location.id)
+  }">
       <h2 class="comments-title">Comments</h2>
       <div class="comments-list">${commentsHtml}</div>
       <div id="comment-form-container" class="comment-form-container" style="display: none;">
@@ -182,7 +191,6 @@ export function locationTemplate(
   return baseTemplate(location.name, content);
 }
 
-// Auth page template (login/register)
 export function authTemplate(): string {
   const content = `
   <main class="page-content">
@@ -349,23 +357,70 @@ export function authTemplate(): string {
   return baseTemplate("Login", content);
 }
 
+export function aboutTemplate(): string {
+  const content = `
+  <main class="page-content page-content--left">
+    <h1>About</h1>
+
+    <p class="about-text">
+      rooftopper.club is a map for sharing rooftopping spots. Highrises, cranes, construction sites,
+      and other places worth climbing for a view. It exists to help rooftoppers find and document spots,
+      and to build a shared record of the community's work.
+    </p>
+
+    <h2 class="about-subtitle">What belongs here</h2>
+    <p class="about-text">
+      Rooftopping only. This is not for urbex spots. Fragile or
+      already-vulnerable places don't belong on this map. Adding those puts them at risk of being found,
+      trashed, or destroyed. Please keep this site focused on rooftops and similar accessible-from-outside
+      locations, not places that survive on obscurity.
+    </p>
+
+    <h2 class="about-subtitle">Stay safe</h2>
+    <p class="about-text">
+      Know your limits, don't go alone without telling someone, and don't
+      let peer pressure push you into doing something you're not comfortable with. No spot is worth
+      dying for.
+    </p>
+
+    <h2 class="about-subtitle">Links</h2>
+    <div class="user-info">
+      <div class="info-row">
+        <span class="info-label">GitHub</span>
+        <span class="info-value"><a href="https://github.com/Kaya-Sem/rooftopper.club" target="_blank" rel="noopener">Kaya-Sem/rooftopper.club</a></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Signal</span>
+        <span class="info-value"><a href="https://signal.me/#eu/upWDJ0_oQgpl79tvmi0vXJA7dbR9YLmdNip9kYCokLthrfOt7lNEmbI_2v9LNAp3" target="_blank" rel="noopener">kayasem</a></span>
+      </div>
+    </div>
+
+    <a href="/" style="margin-top: 16px;" onclick="event.preventDefault(); history.back();">← Back</a>
+  </main>`;
+
+  return baseTemplate("About", content);
+}
+
 // User profile page template (public profile + owner-only settings)
 export function userProfileTemplate(profile: UserProfile): string {
   const displayName = profile.username ?? "Unknown user";
 
   const locations = profile.locations;
-  const locationsHtml =
-    locations.length === 0
-      ? "<p class=\"location-photos-empty\">No locations added yet.</p>"
-      : `<div class="user-locations-grid">${locations
-          .map(
-            (loc) =>
-              `<a href="/location/${escapeHtml(loc.id)}" class="user-location-card">
+  const locationsHtml = locations.length === 0
+    ? '<p class="location-photos-empty">No locations added yet.</p>'
+    : `<div class="user-locations-grid">${
+      locations
+        .map(
+          (loc) =>
+            `<a href="/location/${
+              escapeHtml(loc.id)
+            }" class="user-location-card">
                 <div class="user-location-name">${escapeHtml(loc.name)}</div>
                 <div class="user-location-type">${escapeHtml(loc.type)}</div>
               </a>`,
-          )
-          .join("\n")}</div>`;
+        )
+        .join("\n")
+    }</div>`;
 
   const content = `
   <main class="page-content page-content--left">
@@ -444,11 +499,12 @@ const LOCATION_TYPES = [
   "unspecified",
 ];
 
-// Add location page template
 export function addLocationTemplate(lat: string, lng: string): string {
   const typeOptions = LOCATION_TYPES.map(
     (t) =>
-      `<option value="${escapeHtml(t)}"${t === "unspecified" ? " selected" : ""}>${escapeHtml(t)}</option>`
+      `<option value="${escapeHtml(t)}"${
+        t === "unspecified" ? " selected" : ""
+      }>${escapeHtml(t)}</option>`,
   ).join("\n      ");
   const content = `
   <main class="page-content page-content--left">

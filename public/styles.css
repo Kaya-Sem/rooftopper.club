@@ -370,6 +370,21 @@ a:hover {
     text-decoration: underline;
 }
 
+/* About page */
+.about-text {
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.about-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
 /* Profile page */
 .profile-header {
     display: flex;
