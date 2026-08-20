@@ -3,9 +3,10 @@ import {
   type LocationDetail,
   type User,
   type LocationComment,
+  type UserProfile,
   locationTemplate,
   authTemplate,
-  userSettingsTemplate,
+  userProfileTemplate,
   addLocationTemplate,
 } from "./templates.ts";
 import process from "node:process";
@@ -112,6 +113,36 @@ async function getLocationWithDetails(uuid: string): Promise<LocationDetail | nu
   };
 }
 
+// Fetch a user's public profile (username + locations they've added)
+async function getUserProfile(uuid: string): Promise<UserProfile | null> {
+  const { data: userRow, error: userError } = await supabase
+    .from("users")
+    .select("id, username")
+    .eq("id", uuid)
+    .single();
+
+  if (userError || !userRow) {
+    if (userError) console.error("Error fetching user:", userError);
+    return null;
+  }
+
+  const { data: locationRows, error: locationsError } = await supabase
+    .from("locations")
+    .select("id, name, type, created_at")
+    .eq("author", uuid)
+    .order("created_at", { ascending: false });
+
+  if (locationsError) {
+    console.error("Error fetching user locations:", locationsError);
+  }
+
+  return {
+    id: userRow.id,
+    username: userRow.username,
+    locations: locationRows ?? [],
+  };
+}
+
 // Content type mapping
 const contentTypes: Record<string, string> = {
   ".html": "text/html",
@@ -154,7 +185,7 @@ const server = Bun.serve({
       });
     }
 
-    // User settings page: /user/:uuid
+    // User profile page: /user/:uuid
     if (pathname.startsWith("/user/")) {
       const uuid = pathname.split("/")[2];
 
@@ -162,8 +193,13 @@ const server = Bun.serve({
         return new Response("Not Found", { status: 404 });
       }
 
-      // Render settings page - user info is fetched client-side
-      return new Response(userSettingsTemplate(uuid), {
+      const profile = await getUserProfile(uuid);
+
+      if (!profile) {
+        return new Response("Not Found", { status: 404 });
+      }
+
+      return new Response(userProfileTemplate(profile), {
         headers: { "Content-Type": "text/html" },
       });
     }

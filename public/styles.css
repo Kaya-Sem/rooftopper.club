@@ -370,6 +370,63 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Profile page */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.profile-header h1 {
+    margin-bottom: 0;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    padding: 12px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-locations-section {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.user-locations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.user-location-card {
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 12px;
+    color: var(--text);
+}
+
+.user-location-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    text-decoration: none;
+}
+
+.user-location-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.user-location-type {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
 /* Location photos section (location detail) */
 .location-photos-section {
     width: 100%;

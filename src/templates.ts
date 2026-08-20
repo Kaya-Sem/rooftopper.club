@@ -58,6 +58,19 @@ export interface LocationDetail extends Location {
   images?: LocationImage[];
 }
 
+export interface UserProfileLocation {
+  id: string;
+  name: string;
+  type: string;
+  created_at: string;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string | null;
+  locations: UserProfileLocation[];
+}
+
 /** Base URL for the images bucket public URLs (e.g. https://xxx.supabase.co/storage/v1/object/public/images). */
 export function locationTemplate(
   location: LocationDetail,
@@ -161,14 +174,8 @@ export function locationTemplate(
         <div id="commentFormError" class="error-message" style="display: none;"></div>
       </div>
     </section>
-    <a href="#" id="locationBackLink">← Back</a>
+    <a href="/" onclick="event.preventDefault(); history.back();">← Back</a>
   </main>
-  <script>
-    document.getElementById("locationBackLink").addEventListener("click", function (e) {
-      e.preventDefault();
-      history.back();
-    });
-  </script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="/script.js"></script>`;
 
@@ -213,15 +220,15 @@ export function authTemplate(): string {
       <a href="#" id="toggleLink">Sign up</a>
     </p>
     
-    <a href="/">← Back</a>
+    <a href="/" onclick="event.preventDefault(); history.back();">← Back</a>
   </main>
-  
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://nmgkxaltewyumrtmdort.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+
     let isLoginMode = true;
     
     const authTitle = document.getElementById("authTitle");
@@ -342,67 +349,74 @@ export function authTemplate(): string {
   return baseTemplate("Login", content);
 }
 
-// User settings page template
-export function userSettingsTemplate(userId: string): string {
+// User profile page template (public profile + owner-only settings)
+export function userProfileTemplate(profile: UserProfile): string {
+  const displayName = profile.username ?? "Unknown user";
+
+  const locations = profile.locations;
+  const locationsHtml =
+    locations.length === 0
+      ? "<p class=\"location-photos-empty\">No locations added yet.</p>"
+      : `<div class="user-locations-grid">${locations
+          .map(
+            (loc) =>
+              `<a href="/location/${escapeHtml(loc.id)}" class="user-location-card">
+                <div class="user-location-name">${escapeHtml(loc.name)}</div>
+                <div class="user-location-type">${escapeHtml(loc.type)}</div>
+              </a>`,
+          )
+          .join("\n")}</div>`;
+
   const content = `
-  <main class="page-content">
-    <h1>Settings</h1>
-    
-    <div class="user-info">
-      <div class="info-row">
-        <span class="info-label">Username</span>
-        <span class="info-value" id="usernameValue">...</span>
-      </div>
+  <main class="page-content page-content--left">
+    <div class="profile-header">
+      <img src="/assets/user.svg" alt="" class="avatar" />
+      <h1>${escapeHtml(displayName)}</h1>
+    </div>
+
+    <section class="user-locations-section">
+      <h2 class="location-photos-title">Locations added</h2>
+      ${locationsHtml}
+    </section>
+
+    <section id="ownerSettings" class="user-info" style="display: none; margin-top: 24px;">
       <div class="info-row">
         <span class="info-label">Email</span>
         <span class="info-value" id="emailValue">...</span>
       </div>
-    </div>
-    
-    <button id="logoutBtn" class="btn btn-danger">Logout</button>
-    
-    <a href="/" style="margin-top: 16px;">← Back</a>
+      <button id="logoutBtn" class="btn btn-danger" style="margin-top: 12px;">Logout</button>
+    </section>
+
+    <a href="/" style="margin-top: 16px;" onclick="event.preventDefault(); history.back();">← Back</a>
   </main>
-  
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://nmgkxaltewyumrtmdort.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const expectedUserId = "${escapeHtml(userId)}";
-    
-    const usernameValue = document.getElementById("usernameValue");
+    const profileUserId = "${escapeHtml(profile.id)}";
+
+    const ownerSettings = document.getElementById("ownerSettings");
     const emailValue = document.getElementById("emailValue");
     const logoutBtn = document.getElementById("logoutBtn");
-    
-    // Fetch and display user info
-    async function loadUserInfo() {
-      const { data: { user }, error } = await supabaseClient.auth.getUser();
-      
-      if (error || !user) {
-        // Not logged in, redirect to auth
-        window.location.href = "/auth";
-        return;
-      }
-      
-      // Verify user is viewing their own settings
-      if (user.id !== expectedUserId) {
-        window.location.href = "/user/" + user.id;
-        return;
-      }
-      
-      usernameValue.textContent = user.user_metadata?.username || "No username set";
+
+    async function loadOwnerSettings() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user || user.id !== profileUserId) return;
+
       emailValue.textContent = user.email || "No email";
+      ownerSettings.style.display = "block";
     }
-    
-    loadUserInfo();
-    
+
+    loadOwnerSettings();
+
     logoutBtn.addEventListener("click", async () => {
       logoutBtn.disabled = true;
       logoutBtn.textContent = "Logging out...";
-      
+
       const { error } = await supabaseClient.auth.signOut();
-      
+
       if (error) {
         console.error("Logout error:", error);
         logoutBtn.disabled = false;
@@ -413,7 +427,7 @@ export function userSettingsTemplate(userId: string): string {
     });
   </script>`;
 
-  return baseTemplate("Settings", content);
+  return baseTemplate(displayName, content);
 }
 
 // Location types (must match script.js / DB enum)
@@ -473,15 +487,15 @@ export function addLocationTemplate(lat: string, lng: string): string {
       <button type="submit" class="btn" id="submitBtn">Save Location</button>
     </form>
     
-    <a href="/" style="margin-top: 16px;">← Cancel</a>
+    <a href="/" style="margin-top: 16px;" onclick="event.preventDefault(); history.back();">← Cancel</a>
   </main>
-  
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://nmgkxaltewyumrtmdort.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+
     const addLocationForm = document.getElementById("addLocationForm");
     const submitBtn = document.getElementById("submitBtn");
     const errorMessage = document.getElementById("errorMessage");
