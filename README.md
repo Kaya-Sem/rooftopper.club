@@ -1,4 +1,4 @@
-<h1 align="center">rooftopper.club</h1>
+<h1 align="center"><a href="https://rooftopping.club">rooftopper.club</a></h1>
 
 <p>
   rooftopper.club is a map for sharing rooftopping spots. Highrises, cranes, construction sites,
@@ -6,7 +6,7 @@
   and to build a shared record of the community's work.
 </p>
 
-<h2>What belongs here</h2>
+<h3>What belongs here</h3>
 <p>
   Rooftopping only. This is not for urbex spots. Fragile or already-vulnerable places don't belong
   on this map. Adding those puts them at risk of being found, trashed, or destroyed. Please keep this
@@ -14,13 +14,13 @@
   obscurity.
 </p>
 
-<h2>Stay safe</h2>
+<h3>Stay safe</h3>
 <p>
   Know your limits, don't go alone without telling someone, and don't let peer pressure push you into
   doing something you're not comfortable with. No spot is worth dying for.
 </p>
 
-## Technical assessment
+### Technical assessment
 
 - **Runtime**: [Bun](https://bun.sh) serving both the API and server-rendered HTML, no framework, no bundler.
 - **Server**: `src/server.ts` is a single `Bun.serve` fetch handler doing manual route matching (`/about`, `/auth`, `/location/:uuid`, `/user/:uuid`, `/add-location`, static files from `public/` and `assets/`).
