@@ -20,7 +20,7 @@
   doing something you're not comfortable with. No spot is worth dying for.
 </p>
 
-### Technical assessment
+### Technical
 
 - **Runtime**: [Bun](https://bun.sh) serving both the API and server-rendered HTML, no framework, no bundler.
 - **Server**: `src/server.ts` is a single `Bun.serve` fetch handler doing manual route matching (`/about`, `/auth`, `/location/:uuid`, `/user/:uuid`, `/add-location`, static files from `public/` and `assets/`).
