@@ -46,12 +46,23 @@ export interface Location {
   description?: string | null;
 }
 
+export interface LocationImage {
+  id: string;
+  storage_path: string;
+  created_at: string;
+}
+
 export interface LocationDetail extends Location {
   author?: User | null;
   comments?: LocationComment[];
+  images?: LocationImage[];
 }
 
-export function locationTemplate(location: LocationDetail): string {
+/** Base URL for the images bucket public URLs (e.g. https://xxx.supabase.co/storage/v1/object/public/images). */
+export function locationTemplate(
+  location: LocationDetail,
+  storagePublicBaseUrl?: string,
+): string {
   const description = location.description?.trim() ?? "";
   const authorLine =
     location.author != null
@@ -86,6 +97,24 @@ export function locationTemplate(location: LocationDetail): string {
           )
           .join("\n");
 
+  const images = location.images ?? [];
+  const imagesHtml =
+    storagePublicBaseUrl && images.length > 0
+      ? images
+          .map(
+            (img, i) => {
+              const url = storagePublicBaseUrl + "/" + img.storage_path;
+              const alt = `Photo ${i + 1} for ${escapeHtml(location.name)}`;
+              return `<a href="${escapeHtml(url)}" class="location-photo-link" target="_blank" rel="noopener"><img src="${escapeHtml(url)}" alt="${alt}" class="location-photo-img" loading="lazy" /></a>`;
+            },
+          )
+          .join("\n")
+      : "";
+  const photosSectionHtml =
+    images.length === 0
+      ? "<p class=\"location-photos-empty\">No photos yet.</p>"
+      : `<div class="location-photos-grid">${imagesHtml}</div>`;
+
   const content = `
   <main class="page-content page-content--left">
     <h1>${escapeHtml(location.name)}</h1>
@@ -104,6 +133,20 @@ export function locationTemplate(location: LocationDetail): string {
       </div>
       ${authorLine}
     </div>
+    <section class="location-photos-section" data-location-id="${escapeHtml(location.id)}">
+      <h2 class="location-photos-title">Photos</h2>
+      <div class="location-photos-list">${photosSectionHtml}</div>
+      <div id="location-image-upload" class="location-image-upload" style="display: none;">
+        <form id="locationImageForm">
+          <div class="form-group">
+            <label for="locationImageInput">Add photos</label>
+            <input type="file" id="locationImageInput" name="images" accept="image/jpeg,image/png,image/webp" multiple />
+          </div>
+          <button type="submit" class="btn">Upload</button>
+        </form>
+        <div id="locationImageError" class="error-message" style="display: none;"></div>
+      </div>
+    </section>
     <section class="comments-section" data-location-id="${escapeHtml(location.id)}">
       <h2 class="comments-title">Comments</h2>
       <div class="comments-list">${commentsHtml}</div>
@@ -476,21 +519,29 @@ export function addLocationTemplate(lat: string, lng: string): string {
         showError("Name is required");
         return;
       }
-      
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        showError("You must be logged in to add a location");
+        window.location.href = "/auth";
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = "Saving...";
-      
+
       try {
         // Format coordinate as PostgreSQL point: (lat,lng)
         const coordinate = "(" + lat + "," + lng + ")";
-        
+
         const { data, error } = await supabaseClient
           .from("locations")
           .insert({
             name: name,
             type: type,
             description: description || null,
-            coordinate: coordinate
+            coordinate: coordinate,
+            author: user.id
           })
           .select()
           .single();

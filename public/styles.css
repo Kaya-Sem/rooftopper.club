@@ -176,7 +176,7 @@ body {
 .page-content--left {
     align-items: flex-start;
     justify-content: flex-start;
-    margin: 0;
+    margin: 0 auto;
     max-width: 480px;
     padding-top: 24px;
 }
@@ -368,6 +368,71 @@ a:hover {
 
 .info-value a:hover {
     text-decoration: underline;
+}
+
+/* Location photos section (location detail) */
+.location-photos-section {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.location-photos-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.location-photos-list {
+    margin-bottom: 12px;
+}
+
+.location-photos-empty {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    padding: 8px 0;
+}
+
+.location-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.location-photo-link {
+    display: block;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    aspect-ratio: 1;
+}
+
+.location-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.location-image-upload {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.location-image-upload .form-group {
+    margin-bottom: 12px;
+}
+
+.location-image-upload .btn {
+    margin-top: 4px;
+}
+
+.location-image-upload input[type="file"] {
+    padding: 8px 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
 }
 
 /* Comments section (location detail) */

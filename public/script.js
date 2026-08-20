@@ -314,6 +314,96 @@ if (document.getElementById("comment-form-container")) {
     initLocationCommentForm();
 }
 
+// Location detail page: photo upload for logged-in users
+if (document.getElementById("location-image-upload")) {
+    initLocationImageUpload();
+}
+
+async function initLocationImageUpload() {
+    const uploadBlock = document.getElementById("location-image-upload");
+    const form = document.getElementById("locationImageForm");
+    const section = document.querySelector(".location-photos-section[data-location-id]");
+    const locationId = section ? section.getAttribute("data-location-id") : null;
+    if (!locationId || !form || !uploadBlock) return;
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        uploadBlock.style.display = "none";
+        return;
+    }
+
+    uploadBlock.style.display = "block";
+    const errorEl = document.getElementById("locationImageError");
+    const fileInput = document.getElementById("locationImageInput");
+    const MAX_SIZE_BYTES = 6 * 1024 * 1024; // 6MB
+    const ALLOWED_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+
+    function showError(msg) {
+        if (errorEl) {
+            errorEl.textContent = msg;
+            errorEl.style.display = "block";
+        }
+    }
+
+    function hideError() {
+        if (errorEl) errorEl.style.display = "none";
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideError();
+        const files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+        if (files.length === 0) {
+            showError("Please select one or more images (JPEG, PNG, or WebP).");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Uploading...";
+        }
+
+        try {
+            for (const file of files) {
+                const ext = ALLOWED_TYPES[file.type];
+                if (!ext) {
+                    showError("Invalid file type. Use JPEG, PNG, or WebP.");
+                    break;
+                }
+                if (file.size > MAX_SIZE_BYTES) {
+                    showError("Each file must be under 6MB.");
+                    break;
+                }
+                const path = `locations/${locationId}/${crypto.randomUUID()}.${ext}`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from("images")
+                    .upload(path, file, { contentType: file.type, upsert: false });
+                if (uploadError) {
+                    showError(uploadError.message || "Upload failed.");
+                    break;
+                }
+                const { error: insertError } = await supabaseClient
+                    .from("location_images")
+                    .insert({ location: locationId, storage_path: path, uploaded_by: user.id });
+                if (insertError) {
+                    showError(insertError.message || "Failed to save image.");
+                    break;
+                }
+            }
+            const hadError = errorEl && errorEl.style.display === "block";
+            if (!hadError) {
+                window.location.reload();
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Upload";
+            }
+        }
+    });
+}
+
 async function initLocationCommentForm() {
     const container = document.getElementById("comment-form-container");
     const form = document.getElementById("commentForm");

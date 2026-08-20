@@ -46,6 +46,24 @@ async function getLocationWithDetails(uuid: string): Promise<LocationDetail | nu
     return null;
   }
 
+  const { data: imageRows, error: imagesError } = await supabase
+    .from("location_images")
+    .select("id, storage_path, created_at")
+    .eq("location", uuid)
+    .order("created_at", { ascending: true });
+
+  if (imagesError) {
+    console.error("Error fetching location images:", imagesError);
+  }
+
+  const images = (imageRows ?? []).map(
+    (row: { id: string; storage_path: string; created_at: string }) => ({
+      id: row.id,
+      storage_path: row.storage_path,
+      created_at: row.created_at,
+    }),
+  );
+
   const { data: commentRows, error: commentsError } = await supabase
     .from("location_comments")
     .select("id, created_at, comment, location, users(id, username)")
@@ -90,6 +108,7 @@ async function getLocationWithDetails(uuid: string): Promise<LocationDetail | nu
     description: locationRow.description ?? null,
     author,
     comments,
+    images,
   };
 }
 
@@ -163,7 +182,8 @@ const server = Bun.serve({
         return new Response("Not Found", { status: 404 });
       }
 
-      return new Response(locationTemplate(location), {
+      const storagePublicBaseUrl = `${SUPABASE_URL}/storage/v1/object/public/images`;
+      return new Response(locationTemplate(location, storagePublicBaseUrl), {
         headers: { "Content-Type": "text/html" },
       });
     }

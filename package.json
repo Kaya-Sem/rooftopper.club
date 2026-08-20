@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "bun run server.ts",
-    "dev": "bun --watch run server.ts"
+    "start": "bun run src/server.ts",
+    "dev": "bun --watch run src/server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2"
