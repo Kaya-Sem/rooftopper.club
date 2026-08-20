@@ -1,4 +1,4 @@
-<h1>rooftopper.club</h1>
+<h1 align="center">rooftopper.club</h1>
 
 <p>
   rooftopper.club is a map for sharing rooftopping spots. Highrises, cranes, construction sites,
