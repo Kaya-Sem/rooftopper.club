@@ -111,7 +111,24 @@ if (document.getElementById("map")) {
 map = L.map("map", {
     zoomControl: false,
     attributionControl: false,
-}).setView([40.7128, -74.0060], 13); // Default to New York City
+}).setView([51.0543, 3.7174], 9);
+
+const RecenterControl = L.Control.extend({
+    options: { position: "bottomright" },
+    onAdd: function () {
+        const container = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-recenter");
+        const link = L.DomUtil.create("a", "leaflet-control-recenter-btn", container);
+        link.href = "#";
+        link.title = "Recenter to my location";
+        link.setAttribute("role", "button");
+        link.setAttribute("aria-label", "Recenter to my location");
+        link.innerHTML = '<img src="/assets/locate-fixed.svg" alt="" width="18" height="18" />';
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(link, "click", L.DomEvent.stop).on(link, "click", recenterOnUserLocation);
+        return container;
+    },
+});
+new RecenterControl().addTo(map);
 
 L.control.zoom({
     position: "bottomright",
@@ -139,13 +156,57 @@ if (urlView) {
 map.on("moveend", updateUrlFromMap);
 updateUrlFromMap();
 
-// Only ask for user location when no map position is present in the URL (e.g. on refresh with params we skip the prompt)
-if (!hasUrlMapPosition && navigator.geolocation) {
+let userLocationMarker = null;
+
+function updateUserLocationMarker(lat, lng) {
+    const latlng = [lat, lng];
+    if (!userLocationMarker) {
+        const icon = L.divIcon({
+            className: "user-location-marker",
+            html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
+        });
+        userLocationMarker = L.marker(latlng, {
+            icon,
+            zIndexOffset: 1000,
+            interactive: false,
+            keyboard: false,
+        }).addTo(map);
+    } else {
+        userLocationMarker.setLatLng(latlng);
+    }
+}
+
+function recenterOnUserLocation() {
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
-            map.setView([latitude, longitude], 14);
+            updateUserLocationMarker(latitude, longitude);
+            map.setView([latitude, longitude], map.getZoom());
             updateUrlFromMap();
+        },
+        (error) => {
+            console.log("Geolocation error:", error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+        },
+    );
+}
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            updateUserLocationMarker(latitude, longitude);
+            if (!hasUrlMapPosition) {
+                map.setView([latitude, longitude], 14);
+                updateUrlFromMap();
+            }
         },
         (error) => {
             console.log("Geolocation error:", error.message);
