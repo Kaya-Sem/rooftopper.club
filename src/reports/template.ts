@@ -8,6 +8,27 @@ const BUCKET_LABELS = {
   low: "Likely gone",
 } as const;
 
+const RTF = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+function formatRelativeTime(iso: string, now: Date = new Date()): string {
+  const diffSec = (new Date(iso).getTime() - now.getTime()) / 1000;
+
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["year", 31_536_000],
+    ["month", 2_592_000],
+    ["day", 86_400],
+    ["hour", 3_600],
+    ["minute", 60],
+  ];
+
+  for (const [unit, secInUnit] of units) {
+    if (Math.abs(diffSec) >= secInUnit) {
+      return RTF.format(Math.round(diffSec / secInUnit), unit);
+    }
+  }
+  return RTF.format(0, "minute");
+}
+
 // Info-rows to splice into the location detail page's "user-info" block.
 export function renderConfidenceInfoRows(location: Location): string {
   const score = liveConfidence(location.confidence_score, location.last_event_at);
@@ -22,14 +43,14 @@ export function renderConfidenceInfoRows(location: Location): string {
   const lastConfirmedLine = location.last_confirmed_at
     ? `<div class="info-row">
         <span class="info-label">Last confirmed</span>
-        <span class="info-value">${new Date(location.last_confirmed_at).toLocaleDateString()}</span>
+        <span class="info-value">${formatRelativeTime(location.last_confirmed_at)}</span>
       </div>`
     : "";
 
   const lastNegativeLine = location.last_negative_at
     ? `<div class="info-row">
         <span class="info-label">Last reported gone</span>
-        <span class="info-value">${new Date(location.last_negative_at).toLocaleDateString()}</span>
+        <span class="info-value">${formatRelativeTime(location.last_negative_at)}</span>
       </div>`
     : "";
 
