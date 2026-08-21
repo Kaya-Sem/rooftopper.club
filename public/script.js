@@ -5,6 +5,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_Bx1d3NFiA4l36A4UUz7dzA_pxJU2Uou";
 // Initialize Supabase client (using CDN global)
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js");
+}
+
 // Parse coordinate string "(lat,lng)" to [lat, lng] array
 function parseCoordinate(coordStr) {
     const match = coordStr && coordStr.match(/\(([^,]+),([^)]+)\)/);
