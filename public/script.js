@@ -22,7 +22,7 @@ const LOCATION_TYPES = [
 
 // Client-side Location model: typed fields + parsed coordinates
 class Location {
-    constructor({ id, name, coordinate, created_at, description, type, latLng }) {
+    constructor({ id, name, coordinate, created_at, description, type, latLng, confidence_score, last_event_at, confirm_count, negative_count }) {
         this.id = id;
         this.name = name;
         this.coordinate = coordinate;
@@ -30,6 +30,10 @@ class Location {
         this.description = description ?? null;
         this.type = type;
         this.latLng = latLng;
+        this.confidence_score = confidence_score;
+        this.last_event_at = last_event_at;
+        this.confirm_count = confirm_count;
+        this.negative_count = negative_count;
     }
 
     static fromSupabase(row) {
@@ -43,6 +47,10 @@ class Location {
             description: row.description ?? null,
             type,
             latLng,
+            confidence_score: row.confidence_score,
+            last_event_at: row.last_event_at,
+            confirm_count: row.confirm_count,
+            negative_count: row.negative_count,
         });
     }
 }
@@ -297,7 +305,10 @@ async function loadMarkers() {
             iconAnchor: [16, 16],
         });
 
-        L.marker(location.latLng, { icon })
+        const score = liveConfidence(location.confidence_score, location.last_event_at);
+        const opacity = CONFIDENCE_BUCKET_OPACITY[confidenceBucket(score)];
+
+        L.marker(location.latLng, { icon, opacity })
             .addTo(map)
             .on("click", () => {
                 window.location.href = `/location/${location.id}`;

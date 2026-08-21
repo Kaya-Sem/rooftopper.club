@@ -1,11 +1,7 @@
-export function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+import { escapeHtml } from "./html.ts";
+import { renderConfidenceInfoRows, renderReportActions } from "./reports/template.ts";
+
+export { escapeHtml };
 
 export function baseTemplate(title: string, content: string): string {
   return `<!DOCTYPE html>
@@ -43,7 +39,14 @@ export interface Location {
   coordinate: string;
   created_at: string;
   description?: string | null;
+  confidence_score: number;
+  last_event_at: string;
+  last_confirmed_at: string | null;
+  last_negative_at: string | null;
+  confirm_count: number;
+  negative_count: number;
 }
+
 
 export interface LocationImage {
   id: string;
@@ -162,6 +165,9 @@ export function locationTemplate(
     </div>`
     : "";
 
+  const confidenceInfoRows = renderConfidenceInfoRows(location);
+  const reportActionsHtml = renderReportActions(location);
+
   const content = `
   <main class="page-content page-content--left">
     ${bannerHtml}
@@ -175,7 +181,9 @@ export function locationTemplate(
   }</span>
       </div>
       ${authorLine}
+      ${confidenceInfoRows}
     </div>
+    ${reportActionsHtml}
     ${actionsHtml}
     <section class="location-photos-section" data-location-id="${
     escapeHtml(location.id)
@@ -205,7 +213,9 @@ export function locationTemplate(
     <a href="/" onclick="event.preventDefault(); history.back();">← Back</a>
   </main>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="/script.js"></script>`;
+  <script src="/reports/confidence.js"></script>
+  <script src="/script.js"></script>
+  <script src="/reports/report-form.js"></script>`;
 
   return baseTemplate(location.name, content);
 }
